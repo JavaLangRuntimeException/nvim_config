@@ -1,42 +1,33 @@
-# THIS REPOSITORY IS ARCHIVED, OUTDATED, AND NO LONGER VALID
+# ディレクトリ構造
+.zshrcはホームディレクトリ直下におくように
 
-## Please refer to the [AstroNvim Documentation](https://docs.astronvim.com/) for the latest instructions
-
----
-
-# AstroNvim User Configuration Example
-
-A user configuration template for [AstroNvim](https://github.com/AstroNvim/AstroNvim)
-
-## 🛠️ Installation
-
-#### Make a backup of your current nvim and shared folder
-
-```shell
-mv ~/.config/nvim ~/.config/nvim.bak
-mv ~/.local/share/nvim ~/.local/share/nvim.bak
+それ以外は.config ディレクトリにおくように
+# pythonのパッケージを使うための設定
+```
+brew install python3
 ```
 
-#### Clone AstroNvim
-
-```shell
-git clone https://github.com/AstroNvim/AstroNvim ~/.config/nvim
+```
+pip3 install --user pynvim --break-system-packages
+```
+# starshipのインストール
+```
+brew install starship
+```
+# Neovimのインストール
+```
+brew install neovim
+```
+# oh-my-zshのインストール
+```
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 ```
 
-#### Create a new user repository from this template
-
-Press the "Use this template" button above to create a new repository to store your user configuration.
-
-You can also just clone this repository directly if you do not want to track your user configuration in GitHub.
-
-#### Clone the repository
-
-```shell
-git clone https://github.com/<your_user>/<your_repository> ~/.config/nvim/lua/user
+# zsh-autosuggestions のインストール
 ```
-
-#### Start Neovim
-
-```shell
-nvim
+brew install zsh-autosuggestions
+```
+# zsh-syntax-highlighting のインストール
+```
+brew install zsh-syntax-highlighting
 ```
