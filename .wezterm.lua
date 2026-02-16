@@ -26,9 +26,9 @@ config.window_background_gradient = {
 config.window_frame = {
   inactive_titlebar_bg = "none",
   active_titlebar_bg = "none",
+  
 }
-config.show_new_tab_button_in_tab_bar = false
-config.show_close_tab_button_in_tabs = false
+
 
 config.colors = {
   tab_bar = {
@@ -68,9 +68,15 @@ end)
 config.mouse_bindings = {
   -- 右クリックでクリップボードから貼り付け
   {
-      event = { Down = { streak = 1, button = 'Right' } },
-      mods = 'NONE',
-      action = wezterm.action.PasteFrom 'Clipboard',
+    event = { Down = { streak = 1, button = 'Right' } },
+    mods = 'NONE',
+    action = wezterm.action.PasteFrom 'Clipboard',
+  },
+  -- CMD+クリックでリンクを開く
+  {
+    event = { Up = { streak = 1, button = "Left" } },
+    mods = "CMD",
+    action = wezterm.action.OpenLinkAtMouseCursor,
   },
 }
 
@@ -141,5 +147,63 @@ config.keys = {
     }),
   },
 }
+
+config.hyperlink_rules = {
+  -- Goの相対パスを検出（キャプチャグループで $1 を使う）
+  {
+    regex = [[\b([\w\-/\.]+\.go)\b]],
+    format = "file://$1",
+  },
+}
+
+-- Cmd+Click でリンクを開くとき、既存の nvim タブでファイルを開く
+wezterm.on("open-uri", function(window, pane, uri)
+  wezterm.log_info("open-uri fired: " .. uri)
+  local path = uri:gsub("file://", "")
+
+  -- 相対パスならクリック元ペインの作業ディレクトリで絶対パスにする
+  if path:sub(1, 1) ~= "/" then
+    local cwd_url = pane:get_current_working_dir()
+    if cwd_url then
+      local cwd = cwd_url.file_path or tostring(cwd_url):gsub("file://[^/]*", "")
+      cwd = cwd:gsub("/$", "")
+      path = cwd .. "/" .. path
+    end
+  end
+
+  wezterm.log_info("resolved path: " .. path)
+
+  -- nvim が動いているタブを探す
+  local mux_window = window:mux_window()
+  for i, tab in ipairs(mux_window:tabs()) do
+    for _, tab_pane in ipairs(tab:panes()) do
+      local process = tab_pane:get_foreground_process_name()
+      if process and process:find("nvim") then
+        -- nvim タブに切り替え
+        window:perform_action(wezterm.action.ActivateTab(i - 1), pane)
+        -- Escape → neo-tree の右のエディタウィンドウでファイルを開く
+        tab_pane:send_text("\x1b:lua vim.cmd('wincmd l') vim.cmd('edit " .. path .. "')\r")
+        return false
+      end
+    end
+  end
+
+  -- nvim が見つからなければ新しいタブでクリック元の作業ディレクトリを nvim . で開き、該当ファイルも開く
+  local cwd_url = pane:get_current_working_dir()
+  local cwd = nil
+  if cwd_url then
+    cwd = cwd_url.file_path or tostring(cwd_url):gsub("file://[^/]*", "")
+    cwd = cwd:gsub("/$", "")
+  end
+
+  window:perform_action(
+    wezterm.action.SpawnCommandInNewTab {
+      cwd = cwd or "",
+      args = { "/opt/homebrew/bin/nvim", ".", path },
+    },
+    pane
+  )
+  return false
+end)
 
 return config
