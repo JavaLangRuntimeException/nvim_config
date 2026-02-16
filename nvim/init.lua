@@ -1,3 +1,7 @@
+-- netrw を完全に無効化（neo-tree で置き換えるため）
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
+
 -- This file simply bootstraps the installation of Lazy.nvim and then calls other files for execution
 -- This file doesn't necessarily need to be touched, BE CAUTIOUS editing this file and proceed at your own risk.
 local lazypath = vim.env.LAZY or vim.fn.stdpath "data" .. "/lazy/lazy.nvim"
@@ -26,4 +30,39 @@ vim.keymap.set('v', '<C-a>', 'ggVG')
 
 require "lazy_setup"
 require "polish"
+
+-- 自動保存: フォーカスを失ったとき・バッファを離れたとき・編集後に自動で保存
+vim.opt.autowriteall = true
+vim.api.nvim_create_autocmd({ "FocusLost", "BufLeave", "InsertLeave", "TextChanged" }, {
+  pattern = "*",
+  callback = function()
+    if vim.bo.modified and vim.bo.buftype == "" and vim.fn.expand("%") ~= "" then
+      vim.cmd("silent! write")
+    end
+  end,
+})
+
+-- nvim . でディレクトリを開いた場合、neo-tree だけ表示して untitled を出さない
+vim.api.nvim_create_autocmd("VimEnter", {
+  callback = function(data)
+    if vim.fn.isdirectory(data.file) == 1 then
+      vim.cmd.cd(data.file)
+      vim.schedule(function()
+        -- neo-tree をサイドバーで開く
+        require("neo-tree.command").execute({ source = "filesystem", position = "left" })
+        -- untitled / ディレクトリの空ウィンドウを閉じる
+        for _, win in ipairs(vim.api.nvim_list_wins()) do
+          local buf = vim.api.nvim_win_get_buf(win)
+          local name = vim.api.nvim_buf_get_name(buf)
+          local ft = vim.bo[buf].filetype
+          if ft ~= "neo-tree" and (name == "" or vim.fn.isdirectory(name) == 1) then
+            if #vim.api.nvim_list_wins() > 1 then
+              pcall(vim.api.nvim_win_close, win, true)
+            end
+          end
+        end
+      end)
+    end
+  end,
+})
 
