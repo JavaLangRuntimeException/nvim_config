@@ -28,7 +28,7 @@ brew install ripgrep
 ```
 # tree-sitter-cliのインストール
 ```
-npm install -g tree-sitter-cli
+npm install -g tree-sitter-cli@0.24.7
 ```
 
 # zsh-autosuggestions のインストール
