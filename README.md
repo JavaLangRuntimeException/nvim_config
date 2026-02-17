@@ -22,6 +22,10 @@ brew install neovim
 ```
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 ```
+# riggrepのインストール
+```
+brew install ripgrep
+```
 
 # zsh-autosuggestions のインストール
 ```
