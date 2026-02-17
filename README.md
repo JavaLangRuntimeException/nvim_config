@@ -26,6 +26,10 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/too
 ```
 brew install ripgrep
 ```
+# tree-sitter-cliのインストール
+```
+npm install -g tree-sitter-cli
+```
 
 # zsh-autosuggestions のインストール
 ```
