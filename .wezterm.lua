@@ -4,12 +4,33 @@ local config = wezterm.config_builder()
 config.automatically_reload_config = true
 
 -- カラースキームの設定
-config.color_scheme = 'Solarized Dark'
+config.color_scheme = 'Solarized Dark (Gogh)'
 
 -- フォントの設定
 config.font_size = 10.0
 
 config.use_ime = true
+
+-- 変換中の文字（プレエディット）を macOS ネイティブの IME ウィンドウで描画
+-- 'Builtin' だと preedit が表示されない場合があるため 'System' を使用
+config.ime_preedit_rendering = 'System'
+
+-- macOS: IME に Shift/Ctrl も渡す（日本語変換中のショートカット対応）
+config.macos_forward_to_ime_modifier_mask = 'SHIFT|CTRL'
+
+-- ===== フォント設定（日本語表示対応） =====
+-- 日本語グリフを含むフォールバックフォントを指定して豆腐（□）を防ぐ
+config.font = wezterm.font_with_fallback {
+  'JetBrains Mono',          -- 主フォント（英数字）
+  'UDEV Gothic',             -- 日本語フォールバック候補1
+  'Noto Sans CJK JP',        -- 日本語フォールバック候補2
+  'Hiragino Kaku Gothic Pro', -- macOS 標準日本語フォント
+}
+config.font_size = 14.0
+
+-- East Asian Ambiguous 幅の文字（罫線文字など）を半角扱いにする
+-- true にすると lazygit / claude 等の TUI レイアウトが崩れる
+config.treat_east_asian_ambiguous_width_as_wide = false
 
 config.window_background_opacity = 0.85
 
@@ -146,6 +167,58 @@ config.keys = {
       wezterm.action.SendKey { key = 't', mods = 'CTRL' },
     }),
   },
+  -- Cmd+D で左右に分割（ホームディレクトリで開く）
+  {
+    key = 'd',
+    mods = 'CMD',
+    action = wezterm.action.SplitHorizontal {
+      cwd = wezterm.home_dir,
+    },
+  },
+  -- Cmd+Shift+E で上下に分割（ホームディレクトリで開く）
+  {
+    key = 'e',
+    mods = 'CMD|SHIFT',
+    action = wezterm.action.SplitVertical {
+      cwd = wezterm.home_dir,
+    },
+  },
+  -- Cmd+B で下1/3にペインを開く
+  {
+    key = 'b',
+    mods = 'CMD',
+    action = wezterm.action.SplitPane {
+      direction = 'Down',
+      size = { Percent = 33 },
+    },
+  },
+  -- Cmd+Shift+D で分割ペインを閉じる
+  {
+    key = 'd',
+    mods = 'CMD|SHIFT',
+    action = wezterm.action.CloseCurrentPane { confirm = false },
+  },
+  -- Cmd+Shift+上下左右 でペインのサイズを調整
+  {
+    key = 'LeftArrow',
+    mods = 'CMD|SHIFT',
+    action = wezterm.action.AdjustPaneSize { 'Left', 5 },
+  },
+  {
+    key = 'RightArrow',
+    mods = 'CMD|SHIFT',
+    action = wezterm.action.AdjustPaneSize { 'Right', 5 },
+  },
+  {
+    key = 'UpArrow',
+    mods = 'CMD|SHIFT',
+    action = wezterm.action.AdjustPaneSize { 'Up', 5 },
+  },
+  {
+    key = 'DownArrow',
+    mods = 'CMD|SHIFT',
+    action = wezterm.action.AdjustPaneSize { 'Down', 5 },
+  },
 }
 
 config.hyperlink_rules = {
@@ -204,6 +277,59 @@ wezterm.on("open-uri", function(window, pane, uri)
     pane
   )
   return false
+end)
+
+-- ===== dev レイアウト =====
+-- シェルから `dev {dir}` を実行すると user-var-changed イベント経由で
+-- 新しいタブに開発用ペインレイアウトを作成する
+--
+-- レイアウト:
+-- +---------+-------------------------------+---------+
+-- | lazygit |            nvim .             | claude  |
+-- | (左1/4) |           (中央1/2)           | (右1/4) |
+-- +---------+-------------------------------+---------+
+-- |              terminal (下 1/５)                     |
+-- +---------------------------------------------------+
+wezterm.on("user-var-changed", function(window, pane, name, value)
+  if name ~= "dev_layout" then
+    return
+  end
+
+  local dir = value
+  if dir == "" then
+    dir = wezterm.home_dir
+  end
+
+  local mux_window = window:mux_window()
+
+  -- 新しいタブを作成 → 中央ペイン（nvim 用）
+  local tab, center_pane = mux_window:spawn_tab { cwd = dir }
+
+  -- 下 1/4 をターミナル用に分割
+  local bottom_pane = center_pane:split {
+    direction = "Bottom",
+    size = 0.12,
+    cwd = dir,
+  }
+
+  -- 中央から右 1/4 を claude 用に分割
+  local right_pane = center_pane:split {
+    direction = "Right",
+    size = 0.25,
+    cwd = dir,
+  }
+
+  -- 残りの 3/4 から左 1/3 を lazygit 用に分割（全体の 1/4）
+  local left_pane = center_pane:split {
+    direction = "Left",
+    size = 0.25,
+    cwd = dir,
+  }
+
+  -- 各ペインにコマンドを送信
+  left_pane:send_text("lazygit\n")
+  center_pane:send_text("nvim .\n")
+  right_pane:send_text("claude\n")
 end)
 
 return config
