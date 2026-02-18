@@ -3,7 +3,7 @@
 # ================================================================
 # Homebrew for Linux (Linuxbrew) の設定
 # これを一番最初に読み込むことで、以降の処理で brew コマンドが使えるようになる
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+eval "$(/opt/homebrew/bin/brew shellenv)"
 
 
 # ================================================================
@@ -41,3 +41,17 @@ eval "$(starship init zsh)"
 # ここに個別のエイリアスなどを追加していく
 # 例: alias ls='ls -lha'
 #
+
+# nvim を n で起動
+alias n='nvim'
+
+# s hogehoge で Google 検索をブラウザで開く
+s() {
+  open "https://www.google.com/search?q=$(echo "$@" | sed 's/ /+/g')"
+}
+
+alias lg='lazygit'
+
+# nvim のカスタム設定一覧を表示
+alias nhelp='nvim +UserHelp'
+export PATH="$HOME/.local/bin:$PATH"
