@@ -18,7 +18,7 @@ if not pcall(require, "lazy") then
   vim.fn.getchar()
   vim.cmd.quit()
 end
- 
+
 -- システムクリップボードとの連携を有効にする
 vim.opt.clipboard:append("unnamedplus")
 
@@ -35,6 +35,25 @@ vim.opt.statuscolumn = '%s%=%{v:lnum} %{v:relnum ? v:relnum : ""} '
 
 require "lazy_setup"
 require "polish"
+
+-- ===== 背景透過 =====
+-- カラースキーム読み込み後に背景を透過にする
+vim.api.nvim_create_autocmd("ColorScheme", {
+  callback = function()
+    local transparent_groups = {
+      "Normal", "NormalNC", "NormalFloat",
+      "SignColumn", "EndOfBuffer",
+      "NeoTreeNormal", "NeoTreeNormalNC", "NeoTreeEndOfBuffer",
+      "NeoTreeWinSeparator",
+      "FloatBorder", "WinSeparator",
+    }
+    for _, group in ipairs(transparent_groups) do
+      vim.api.nvim_set_hl(0, group, { bg = "NONE" })
+    end
+  end,
+})
+-- 起動時にも適用（既にカラースキームが読み込み済みの場合）
+vim.cmd("doautocmd ColorScheme")
 
 -- ===== :UserHelp コマンド / nvim --userhelp =====
 local function show_user_help()
@@ -272,4 +291,3 @@ vim.api.nvim_create_autocmd("VimEnter", {
     end
   end,
 })
-
