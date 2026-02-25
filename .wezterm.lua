@@ -7,7 +7,7 @@ config.automatically_reload_config = true
 config.color_scheme = 'Solarized Dark (Gogh)'
 
 -- フォントの設定
-config.font_size = 10.0
+config.font_size = 8.0
 
 config.use_ime = true
 
@@ -26,7 +26,7 @@ config.font = wezterm.font_with_fallback {
   'Noto Sans CJK JP',        -- 日本語フォールバック候補2
   'Hiragino Kaku Gothic Pro', -- macOS 標準日本語フォント
 }
-config.font_size = 14.0
+config.font_size = 12.0
 
 -- East Asian Ambiguous 幅の文字（罫線文字など）を半角扱いにする
 -- true にすると lazygit / claude 等の TUI レイアウトが崩れる
@@ -93,11 +93,21 @@ config.mouse_bindings = {
     mods = 'NONE',
     action = wezterm.action.PasteFrom 'Clipboard',
   },
-  -- CMD+クリックでリンクを開く
+  -- CMD+クリック: nvim 内ではスマートナビゲーション（定義ジャンプ / Markdownリンク）
+  -- nvim 外ではリンクを開く
   {
     event = { Up = { streak = 1, button = "Left" } },
     mods = "CMD",
-    action = wezterm.action.OpenLinkAtMouseCursor,
+    action = wezterm.action_callback(function(window, pane)
+      local process = pane:get_foreground_process_name() or ""
+      if process:find("nvim") or process:find("vim") then
+        -- Down イベントでカーソルがクリック位置に移動済み
+        -- ESC でノーマルモードにしてから gd でスマートナビゲーション
+        pane:send_text("\x1bgd")
+      else
+        window:perform_action(wezterm.action.OpenLinkAtMouseCursor, pane)
+      end
+    end),
   },
 }
 
@@ -284,12 +294,14 @@ end)
 -- 新しいタブに開発用ペインレイアウトを作成する
 --
 -- レイアウト:
--- +---------+-------------------------------+---------+
--- | lazygit |            nvim .             | claude  |
--- | (左1/4) |           (中央1/2)           | (右1/4) |
--- +---------+-------------------------------+---------+
--- |              terminal (下 1/５)                     |
--- +---------------------------------------------------+
+-- +------------+-----------+-------------------------------+----------+
+-- | lazydocker |  lazygit  |            nvim .             |  claude  |
+-- |  (左1/6)   |  (1/6)    |          (中央3/6)            |  (右1/6) |
+-- |            |           |           上 6/7              |          |
+-- +------------+-----------+-------------------------------+----------+
+-- |            terminal 1            |        terminal 2              |
+-- |           (下1/7 左半分)          |       (下1/7 右半分)            |
+-- +----------------------------------+--------------------------------+
 wezterm.on("user-var-changed", function(window, pane, name, value)
   if name ~= "dev_layout" then
     return
@@ -305,31 +317,47 @@ wezterm.on("user-var-changed", function(window, pane, name, value)
   -- 新しいタブを作成 → 中央ペイン（nvim 用）
   local tab, center_pane = mux_window:spawn_tab { cwd = dir }
 
-  -- 下 1/4 をターミナル用に分割
+  -- 下 1/7 をターミナル用に分割
   local bottom_pane = center_pane:split {
     direction = "Bottom",
-    size = 0.12,
+    size = 0.14,  -- ≈ 1/7
     cwd = dir,
   }
 
-  -- 中央から右 1/4 を claude 用に分割
+  -- 下部を左右半分に分割
+  local bottom_right_pane = bottom_pane:split {
+    direction = "Right",
+    size = 0.50,
+    cwd = dir,
+  }
+
+  -- 中央から右 1/6 を claude 用に分割
   local right_pane = center_pane:split {
     direction = "Right",
-    size = 0.25,
+    size = 0.17,  -- ≈ 1/6
     cwd = dir,
   }
 
-  -- 残りの 3/4 から左 1/3 を lazygit 用に分割（全体の 1/4）
-  local left_pane = center_pane:split {
+  -- 残りの 5/6 から左 2/5 (全体の 2/6) を lazydocker+lazygit 用に分割
+  local left_half = center_pane:split {
     direction = "Left",
-    size = 0.25,
+    size = 0.40,  -- 5/6 の 2/5 = 全体の 2/6
     cwd = dir,
   }
 
-  -- 各ペインにコマンドを送信
-  left_pane:send_text("lazygit\n")
+  -- left_half を左右半分に分割: 左=lazydocker, 右(残り)=lazygit
+  local lazydocker_pane = left_half:split {
+    direction = "Left",
+    size = 0.50,
+    cwd = dir,
+  }
+
+  -- 上部ペインにコマンドを送信
+  lazydocker_pane:send_text("lazydocker\n")
+  left_half:send_text("lazygit\n")
   center_pane:send_text("nvim .\n")
   right_pane:send_text("claude\n")
+  -- 下部ペインはコマンドなし（空ターミナル）
 end)
 
 return config
