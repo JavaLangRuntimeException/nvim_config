@@ -1,6 +1,33 @@
 -- AstroCore provides a central place to modify mappings, vim options, autocommands, and more!
 -- Configuration documentation can be found with `:h astrocore`
 
+-- ===== スマートナビゲーション =====
+-- Markdown リンク [text](path) → ファイルを開く
+-- それ以外 → LSP 定義ジャンプ
+local function smart_navigate()
+  if vim.bo.filetype == "markdown" then
+    local line = vim.api.nvim_get_current_line()
+    local col = vim.api.nvim_win_get_cursor(0)[2] + 1
+    local pos = 1
+    while pos <= #line do
+      local ls, le, url = line:find("%[.-%]%((.-)%)", pos)
+      if not ls then break end
+      if col >= ls and col <= le then
+        local path = url:gsub("#.*$", "")
+        if path ~= "" then vim.cmd("edit " .. vim.fn.fnameescape(path)) end
+        return
+      end
+      pos = le + 1
+    end
+    -- リンク外ならデフォルト gf を試す
+    local ok = pcall(vim.cmd, "normal! gf")
+    if not ok then vim.notify("File not found under cursor", vim.log.levels.WARN) end
+  else
+    vim.lsp.buf.definition()
+  end
+end
+_G.SmartNavigate = smart_navigate
+
 ---@type LazySpec
 return {
   "AstroNvim/astrocore",
@@ -63,6 +90,42 @@ return {
       },
       g = {},
     },
+    -- Autocmds
+    autocmds = {
+      -- Markdown ファイルで gf をリンク対応にする
+      markdown_gf = {
+        {
+          event = "FileType",
+          pattern = "markdown",
+          callback = function(args)
+            vim.opt_local.suffixesadd:append(".md")
+            vim.keymap.set("n", "gf", function()
+              local line = vim.api.nvim_get_current_line()
+              local col = vim.api.nvim_win_get_cursor(0)[2] + 1 -- 1-indexed
+
+              -- Markdownリンク [text](path) からパスを抽出
+              local pos = 1
+              while pos <= #line do
+                local ls, le, url = line:find("%[.-%]%((.-)%)", pos)
+                if not ls then break end
+                if col >= ls and col <= le then
+                  local path = url:gsub("#.*$", "") -- アンカーを除去
+                  if path ~= "" then
+                    vim.cmd("edit " .. vim.fn.fnameescape(path))
+                  end
+                  return
+                end
+                pos = le + 1
+              end
+
+              -- フォールバック: 通常の gf
+              local ok = pcall(vim.cmd, "normal! gf")
+              if not ok then vim.notify("File not found under cursor", vim.log.levels.WARN) end
+            end, { buffer = args.buf, desc = "Go to file (markdown link aware)" })
+          end,
+        },
+      },
+    },
     -- Mappings
     mappings = {
       n = {
@@ -78,10 +141,11 @@ return {
           desc = "Close buffer from tabline",
         },
 
-        -- ===== Ctrl+Click → 定義ジャンプ (GoLand / VS Code style) =====
+        -- ===== Cmd/Ctrl+Click → スマートナビゲーション =====
+        -- Markdown: リンク先ファイルを開く / Code: LSP 定義ジャンプ
         ["<C-LeftMouse>"] = {
-          "<LeftMouse><cmd>lua vim.lsp.buf.definition()<CR>",
-          desc = "Go to definition (Ctrl+Click)",
+          "<LeftMouse><cmd>lua SmartNavigate()<CR>",
+          desc = "Smart navigate (Ctrl+Click)",
         },
         -- Ctrl+RightClick → 戻る
         ["<C-RightMouse>"] = {
@@ -91,8 +155,8 @@ return {
 
         -- ===== LSP navigation (GoLand style) =====
         ["gd"] = {
-          function() vim.lsp.buf.definition() end,
-          desc = "Go to definition",
+          smart_navigate,
+          desc = "Smart navigate (definition / markdown link)",
         },
         ["gi"] = {
           function() vim.lsp.buf.implementation() end,
