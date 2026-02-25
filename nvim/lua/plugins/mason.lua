@@ -3,47 +3,39 @@ return {
   {
     "williamboman/mason.nvim",
     build = ":MasonUpdate",
-    config = function()
-      require("mason").setup()
-    end,
   },
 
   -- mason-lspconfig.nvim の設定
+  -- opts を使うことで AstroNvim のデフォルト LSP ハンドラを保持しつつサーバーを追加
   {
     "williamboman/mason-lspconfig.nvim",
-    config = function()
-      require("mason-lspconfig").setup({
-        ensure_installed = {
-          "lua_ls",       -- Lua
-          "pyright",      -- Python
-          "ts_ls",        -- TypeScript/JavaScript
-          "gopls",        -- Go
-          "jdtls",        -- Java
-          "omnisharp",    -- C#
-          "intelephense", -- PHP
-          "texlab",       -- LaTeX
-        },
-      })
-    end,
+    opts = {
+      ensure_installed = {
+        "lua_ls",       -- Lua
+        "pyright",      -- Python
+        "ts_ls",        -- TypeScript/JavaScript
+        "gopls",        -- Go
+        "jdtls",        -- Java
+        "omnisharp",    -- C#
+        "intelephense", -- PHP
+        "texlab",       -- LaTeX
+      },
+    },
   },
 
   -- mason-null-ls.nvim の設定
   {
     "jay-babu/mason-null-ls.nvim",
-    config = function()
-      require("mason-null-ls").setup({
-        ensure_installed = { "stylua" },
-      })
-    end,
+    opts = {
+      ensure_installed = { "stylua" },
+    },
   },
 
   -- mason-nvim-dap.nvim の設定
   {
     "jay-babu/mason-nvim-dap.nvim",
-    config = function()
-      require("mason-nvim-dap").setup({
-        ensure_installed = { "python" },
-      })
-    end,
+    opts = {
+      ensure_installed = { "python" },
+    },
   },
 }
