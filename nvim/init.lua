@@ -18,7 +18,7 @@ if not pcall(require, "lazy") then
   vim.fn.getchar()
   vim.cmd.quit()
 end
-
+ 
 -- システムクリップボードとの連携を有効にする
 vim.opt.clipboard:append("unnamedplus")
 
@@ -104,6 +104,23 @@ local function show_user_help()
     "  ga                          git add (ファイル単位)",
     "  gu                          git unstage",
     "  gr                          git revert",
+    "",
+    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+    "  LSP ナビゲーション (plugins/astrocore.lua)",
+    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+    "  gd                          定義に飛ぶ (Go to Definition)",
+    "  gi                          実装に飛ぶ (Go to Implementation)",
+    "  gr                          参照一覧を表示 (Find References / Telescope)",
+    "  gy                          型定義に飛ぶ (Go to Type Definition)",
+    "  K                           ホバードキュメント表示",
+    "  Ctrl+Click                  定義に飛ぶ (マウス)",
+    "  Ctrl+RightClick             戻る (マウス)",
+    "  Ctrl+O                      ジャンプ元に戻る",
+    "  Ctrl+I                      ジャンプ先に進む",
+    "  Space+ss                    ワークスペースのシンボル・型を検索",
+    "",
+    "  ※ LSP サーバーは Mason で自動インストール (plugins/mason.lua)",
+    "    対応言語: Lua, Python, TypeScript/JS, Go, Java, C#, PHP, LaTeX",
     "",
     "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
     "  Telescope (plugins/telescope.lua)",
@@ -291,3 +308,4 @@ vim.api.nvim_create_autocmd("VimEnter", {
     end
   end,
 })
+
