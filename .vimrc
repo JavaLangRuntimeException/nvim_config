@@ -17,5 +17,3 @@ call plug#end()
 syntax on
 set termguicolors
 colorscheme gruvbox
-
-

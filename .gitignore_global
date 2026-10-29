@@ -1,0 +1,21 @@
+*~
+.DS_Store
+top.prefab
+MasterBall.fbx.meta
+MonsterBall.fbx.meta
+PremiaBall.fbx.meta
+SuperBall.fbx.meta
+プレシャスボール　2.fbx.meta
+CaseSensitiveTest
+arrow.fbx.meta
+HyperBall.fbx.meta
+HyperBallonTable.fbx.meta
+MasterBallonTable.fbx.meta
+MonsterBallonTable.fbx.meta
+PremiaBallonTable.fbx.meta
+PreshasBallonTable.fbx.meta
+SuperBallonTable.fbx.meta
+.env
+PlayerMove.cs.meta
+
+**/.claude/settings.local.json

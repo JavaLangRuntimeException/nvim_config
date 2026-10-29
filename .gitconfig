@@ -1,0 +1,39 @@
+[user]
+	email = tanahashist1230@outlook.jp
+	name = javaLangRuntimeException
+[filter "lfs"]
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+[core]
+	excludesfile = ~/.gitignore_global
+	autocrlf = input
+	compression = 0
+[difftool "sourcetree"]
+	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+	path = 
+[mergetool "sourcetree"]
+	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+	trustExitCode = true
+[http]
+	postBuffer = 524288000
+	lowSpeedLimit = 0
+	lowSpeedTime = 999999
+	version = HTTP/1.1
+[gc]
+	auto = 300000000
+[alias]
+	ignore = "!gi() { curl -L -s https://www.gitignore.io/api/$@ ;}; gi"
+[color "status"]
+	added = green
+	changed = yellow blink
+	untracked = red reverse
+	deleted = magenta
+
+[color "branch"]
+    current = green blink 
+    local = yellow
+    remote = red
+[push]
+	default = current
